@@ -59,10 +59,57 @@ The platform enables users to generate AI responses, store interactions, monitor
 
 ## Project Structure
 
-backend/
-frontend/
-requirements.txt
-README.md
+AI-Governance-Dashboard/
+│
+├── backend/
+│   ├── database/
+│   ├── routes/
+│   ├── schemas/
+│   └── services/
+│
+├── frontend/
+│   ├── app.py
+│   └── pages/
+│
+├── assets/
+├── requirements.txt
+└── README.md
+
+## Screenshots
+
+### Home Page
+
+![Home](assets/Home.png)
+
+### Dashboard
+
+![Dashboard](assets/Dashboard.png)
+
+### Generate Response
+
+![Generate](assets/Generate.png)
+
+### Analytics
+
+![Analytics](assets/Analytics.png)
+
+### Prompt History
+
+![History](assets/History.png)
+
+## Installation
+
+### Clone Repository
+
+```bash
+git clone https://github.com/teja2704/AI-Governance-Dashboard.git
+
+## Install Dependencies
+pip install -r requirements.txt
+Start Backend
+uvicorn backend.main:app --reload
+Start Frontend
+streamlit run frontend/app.py
 
 ## Future Enhancements
 

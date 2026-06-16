@@ -59,6 +59,7 @@ The platform enables users to generate AI responses, store interactions, monitor
 
 ## Project Structure
 
+```text
 AI-Governance-Dashboard/
 │
 ├── backend/
@@ -74,6 +75,7 @@ AI-Governance-Dashboard/
 ├── assets/
 ├── requirements.txt
 └── README.md
+```
 
 ## Screenshots
 

@@ -102,6 +102,22 @@ Tracked:
 
 * FastAPI TestClient currently emits a Starlette/httpx deprecation warning. The test still passes; address during a future dependency-stack update.
 
+## Phase 8: Responses and Evaluations
+
+Status: complete.
+
+Changes:
+
+* Added first-class `Response` records tied to generated prompts.
+* Preserved existing prompt history fields for backward compatibility.
+* Added `/responses` list/detail endpoints with date and prompt filters.
+* Added `Evaluation` records for automated and human reviews.
+* Added automated response checks for near-empty responses, max length, sensitive words, and repeated text.
+* Added `/evaluations` endpoints for human creation and filtered reads.
+* Human evaluations derive `evaluator_id` from the JWT user and ignore client-submitted evaluator IDs.
+* Added Alembic migration `0002_add_responses_and_evaluations`.
+* Added integration coverage for response creation, automated flags, auth requirements, evaluator attribution, and mixed evaluation reads.
+
 ## Verification
 
 Completed:
@@ -110,8 +126,9 @@ Completed:
 * `python -m compileall backend frontend tests`
 * Login smoke check with bootstrap user and authenticated `/prompts/` access
 * Alembic-backed auth integration test after removing startup `create_all`
+* Response and evaluation integration tests
 
 ## Follow-Up Queue
 
-1. Add route modules for `/responses` and `/evaluations` when those product areas are implemented.
-2. Address the FastAPI TestClient dependency warning during the next dependency-stack update.
+1. Address the FastAPI TestClient dependency warning during the next dependency-stack update.
+2. Add role-based permissions if evaluators, admins, and viewers need different access levels.

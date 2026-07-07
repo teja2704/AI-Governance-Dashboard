@@ -36,6 +36,13 @@ The platform lets authenticated users generate AI responses, store interactions,
 * Average response length
 * Model usage analytics
 
+### Response Evaluations
+
+* First-class response records tied to prompts
+* Automated response checks after each generated response is saved
+* Human evaluation endpoint with JWT-based evaluator attribution
+* Evaluation filtering by response and evaluation type
+
 ## Tech Stack
 
 ### Backend
@@ -181,6 +188,17 @@ Passwords are stored as Passlib hashes in the `users` table. JWT signing uses `J
 The Streamlit frontend stores the JWT only in server-side session memory and sends it as a Bearer token on API requests. It does not write the token to `localStorage`.
 
 See [docs/security-review.md](docs/security-review.md) for the current security check notes and remaining threat considerations.
+
+## API Notes
+
+Authenticated API routers include:
+
+* `/prompts`
+* `/responses`
+* `/evaluations`
+* `/analytics`
+
+Generated Gemini responses are saved automatically as response records tied to the prompt that produced them. Automated evaluations run immediately after each generated response is saved.
 
 ## Implementation Documentation
 

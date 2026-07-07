@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from backend.database.models import Prompt
+from backend.services.response_service import create_response
 
 
 def create_prompt(db: Session, prompt_text: str):
@@ -41,11 +42,22 @@ def create_prompt_with_response(
 
     db.add(prompt)
 
+    db.flush()
+
+    response = create_response(
+        db=db,
+        prompt_id=prompt.id,
+        response_text=response_text,
+        model_name=model_name,
+        status=status
+    )
+
     db.commit()
 
     db.refresh(prompt)
+    db.refresh(response)
 
-    return prompt
+    return prompt, response
 
 
 def get_prompt_history(db: Session):

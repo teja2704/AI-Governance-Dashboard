@@ -22,6 +22,8 @@ class GenerateRequest(BaseModel):
 class GenerateResponse(BaseModel):
     prompt: str
     response: str
+    prompt_id: int
+    response_id: int
     
 from datetime import datetime
 

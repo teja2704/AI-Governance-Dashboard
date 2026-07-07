@@ -6,8 +6,15 @@ from backend.services.auth_service import ensure_bootstrap_user
 
 def init_db() -> None:
     inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    required_tables = {
+        "prompts",
+        "users",
+        "responses",
+        "evaluations"
+    }
 
-    if "users" not in inspector.get_table_names():
+    if not required_tables.issubset(table_names):
         raise RuntimeError(
             "Database schema is not initialized. Run `alembic upgrade head`."
         )

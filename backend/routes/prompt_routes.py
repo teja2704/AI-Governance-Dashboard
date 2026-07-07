@@ -75,7 +75,7 @@ def generate_ai_response(
 
         status = "FAILED"
 
-    create_prompt_with_response(
+    saved_prompt, saved_response = create_prompt_with_response(
         db=db,
         prompt_text=request.prompt,
         response_text=ai_response,
@@ -85,7 +85,9 @@ def generate_ai_response(
 
     return GenerateResponse(
         prompt=request.prompt,
-        response=ai_response
+        response=ai_response,
+        prompt_id=saved_prompt.id,
+        response_id=saved_response.id
     )
 
 

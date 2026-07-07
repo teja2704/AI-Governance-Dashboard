@@ -1,5 +1,7 @@
 # AI Governance Dashboard
 
+[![CI](https://github.com/teja2704/AI-Governance-Dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/teja2704/AI-Governance-Dashboard/actions/workflows/ci.yml)
+
 ## Overview
 
 AI Governance Dashboard is a full-stack AI monitoring and governance platform built with FastAPI, PostgreSQL, Streamlit, and Google's Gemini API.

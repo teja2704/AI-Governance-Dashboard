@@ -1,0 +1,13 @@
+.env
+.git
+.idea
+.streamlit
+.vscode
+__pycache__
+*.pyc
+*.db
+*.log
+venv
+assets
+docs
+frontend

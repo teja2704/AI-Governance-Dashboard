@@ -20,6 +20,8 @@ def create_prompt(db: Session, prompt_text: str):
 def get_all_prompts(db: Session):
 
     return db.query(Prompt).all()
+
+
 def create_prompt_with_response(
     db: Session,
     prompt_text: str,
@@ -45,20 +47,6 @@ def create_prompt_with_response(
 
     return prompt
 
-    prompt = Prompt(
-        prompt=prompt_text,
-        response=response_text,
-        model=model_name,
-        response_length=len(response_text)
-    )
-
-    db.add(prompt)
-
-    db.commit()
-
-    db.refresh(prompt)
-
-    return prompt
 
 def get_prompt_history(db: Session):
 

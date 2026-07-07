@@ -1,7 +1,12 @@
-import streamlit as st
 import requests
+import streamlit as st
 
-st.title("🏠 AI Governance Dashboard")
+from auth import API_BASE_URL, auth_headers, require_auth
+
+
+require_auth()
+
+st.title("AI Governance Dashboard")
 
 st.markdown("""
 Welcome to the AI Governance Dashboard.
@@ -10,16 +15,14 @@ Monitor AI usage, track response quality,
 analyze prompt history, and review governance metrics.
 """)
 
-# =========================
-# API CALLS
-# =========================
-
 analytics_response = requests.get(
-    "http://127.0.0.1:8000/analytics/"
+    f"{API_BASE_URL}/analytics/",
+    headers=auth_headers()
 )
 
 kpi_response = requests.get(
-    "http://127.0.0.1:8000/analytics/dashboard-kpis"
+    f"{API_BASE_URL}/analytics/dashboard-kpis",
+    headers=auth_headers()
 )
 
 if (
@@ -27,13 +30,12 @@ if (
     and
     kpi_response.status_code == 200
 ):
-
     analytics = analytics_response.json()
     kpis = kpi_response.json()
 
     st.divider()
 
-    st.subheader("📊 Governance Overview")
+    st.subheader("Governance Overview")
 
     col1, col2, col3 = st.columns(3)
 
@@ -57,7 +59,7 @@ if (
 
     st.divider()
 
-    st.subheader("📈 Performance Metrics")
+    st.subheader("Performance Metrics")
 
     col4, col5, col6 = st.columns(3)
 
@@ -81,7 +83,7 @@ if (
 
     st.divider()
 
-    st.subheader("🤖 Model Insights")
+    st.subheader("Model Insights")
 
     col7, col8 = st.columns(2)
 
@@ -105,7 +107,7 @@ Success Rate: {kpis["success_rate"]}%
 
     st.divider()
 
-    st.subheader("📝 Latest Prompt")
+    st.subheader("Latest Prompt")
 
     st.text_area(
         "Most Recent User Prompt",
@@ -115,7 +117,4 @@ Success Rate: {kpis["success_rate"]}%
     )
 
 else:
-
-    st.error(
-        "Unable to load dashboard data."
-    )
+    st.error("Unable to load dashboard data.")

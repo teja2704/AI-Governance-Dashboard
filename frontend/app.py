@@ -1,13 +1,17 @@
-import streamlit as st
 import requests
+import streamlit as st
+
+from auth import API_BASE_URL, auth_headers, require_auth
+
 
 st.set_page_config(
     page_title="AI Governance Dashboard",
-    page_icon="🤖",
     layout="wide"
 )
 
-st.title("🤖 AI Governance Dashboard")
+require_auth()
+
+st.title("AI Governance Dashboard")
 
 st.markdown("""
 ### AI Monitoring & Governance Platform
@@ -16,18 +20,15 @@ Track AI-generated responses, monitor model performance,
 analyze prompt history, and evaluate governance metrics.
 """)
 
-# =========================
-# LIVE DASHBOARD METRICS
-# =========================
-
 try:
-
     analytics_response = requests.get(
-        "http://127.0.0.1:8000/analytics/"
+        f"{API_BASE_URL}/analytics/",
+        headers=auth_headers()
     )
 
     kpi_response = requests.get(
-        "http://127.0.0.1:8000/analytics/dashboard-kpis"
+        f"{API_BASE_URL}/analytics/dashboard-kpis",
+        headers=auth_headers()
     )
 
     if (
@@ -35,59 +36,44 @@ try:
         and
         kpi_response.status_code == 200
     ):
-
         analytics = analytics_response.json()
         kpis = kpi_response.json()
 
         st.divider()
 
-        st.subheader("📊 System Overview")
+        st.subheader("System Overview")
 
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric(
-                "Total Requests",
-                analytics["total_requests"]
-            )
+            st.metric("Total Requests", analytics["total_requests"])
 
         with col2:
-            st.metric(
-                "AI Requests",
-                analytics["ai_requests"]
-            )
+            st.metric("AI Requests", analytics["ai_requests"])
 
         with col3:
-            st.metric(
-                "Success Rate",
-                f'{kpis["success_rate"]}%'
-            )
+            st.metric("Success Rate", f'{kpis["success_rate"]}%')
 
         with col4:
-            st.metric(
-                "Failed Requests",
-                kpis["failed_requests"]
-            )
+            st.metric("Failed Requests", kpis["failed_requests"])
 
         st.divider()
 
         col5, col6 = st.columns(2)
 
         with col5:
-
             st.info(
                 f"""
-### 🤖 Most Used Model
+### Most Used Model
 
 {kpis["most_used_model"]}
 """
             )
 
         with col6:
-
             st.success(
                 f"""
-### ⚡ System Status
+### System Status
 
 Operational
 
@@ -96,18 +82,14 @@ Success Rate: {kpis["success_rate"]}%
             )
 
 except Exception:
-
-    st.warning(
-        "Backend not available. Start FastAPI server."
-    )
+    st.warning("Backend not available. Start FastAPI server.")
 
 st.divider()
 
 col1, col2 = st.columns(2)
 
 with col1:
-
-    st.subheader("📌 Platform Features")
+    st.subheader("Platform Features")
 
     st.markdown("""
 - AI Response Generation
@@ -119,8 +101,7 @@ with col1:
 """)
 
 with col2:
-
-    st.subheader("🏗 Architecture")
+    st.subheader("Architecture")
 
     st.markdown("""
 **Backend**
@@ -137,7 +118,7 @@ with col2:
 
 st.divider()
 
-st.sidebar.title("🤖 AI Governance")
+st.sidebar.title("AI Governance")
 
 st.sidebar.markdown("""
 ### Navigation

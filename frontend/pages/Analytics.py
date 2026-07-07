@@ -1,8 +1,13 @@
-import streamlit as st
-import requests
 import pandas as pd
+import requests
+import streamlit as st
 
-st.title("📊 Governance Analytics")
+from auth import API_BASE_URL, auth_headers, require_auth
+
+
+require_auth()
+
+st.title("Governance Analytics")
 
 st.caption(
     "Monitor system usage, model performance, and governance KPIs."
@@ -10,19 +15,15 @@ st.caption(
 
 st.divider()
 
-# =========================
-# Governance Metrics
-# =========================
-
 response = requests.get(
-    "http://127.0.0.1:8000/analytics/"
+    f"{API_BASE_URL}/analytics/",
+    headers=auth_headers()
 )
 
 if response.status_code == 200:
-
     analytics = response.json()
 
-    st.subheader("📈 Core Metrics")
+    st.subheader("Core Metrics")
 
     col1, col2, col3 = st.columns(3)
 
@@ -46,7 +47,7 @@ if response.status_code == 200:
 
     st.divider()
 
-    st.subheader("📏 Content Metrics")
+    st.subheader("Content Metrics")
 
     col4, col5 = st.columns(2)
 
@@ -64,7 +65,7 @@ if response.status_code == 200:
 
     st.divider()
 
-    st.subheader("✅ Reliability Metrics")
+    st.subheader("Reliability Metrics")
 
     col6, col7 = st.columns(2)
 
@@ -82,7 +83,7 @@ if response.status_code == 200:
 
     st.divider()
 
-    st.subheader("📊 Request Distribution")
+    st.subheader("Request Distribution")
 
     chart_data = pd.DataFrame(
         {
@@ -102,40 +103,28 @@ if response.status_code == 200:
     )
 
 else:
-
-    st.error(
-        "Unable to load analytics."
-    )
-
-# =========================
-# Model Usage Analytics
-# =========================
+    st.error("Unable to load analytics.")
 
 st.divider()
 
-st.subheader("🤖 Model Usage Analytics")
+st.subheader("Model Usage Analytics")
 
 model_response = requests.get(
-    "http://127.0.0.1:8000/analytics/model-usage"
+    f"{API_BASE_URL}/analytics/model-usage",
+    headers=auth_headers()
 )
 
 if model_response.status_code == 200:
-
     model_data = model_response.json()
 
     if model_data:
-
-        model_df = pd.DataFrame(
-            model_data
-        )
+        model_df = pd.DataFrame(model_data)
 
         st.bar_chart(
             model_df.set_index("model")
         )
 
-        st.markdown(
-            "### Model Usage Details"
-        )
+        st.markdown("### Model Usage Details")
 
         st.dataframe(
             model_df,
@@ -143,16 +132,10 @@ if model_response.status_code == 200:
         )
 
     else:
-
-        st.info(
-            "No model usage data available."
-        )
+        st.info("No model usage data available.")
 
 else:
-
-    st.error(
-        "Unable to load model usage data."
-    )
+    st.error("Unable to load model usage data.")
 
 st.divider()
 

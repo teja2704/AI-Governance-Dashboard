@@ -1,15 +1,29 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
+from backend.database.init_db import init_db
+from backend.routes.auth_routes import router as auth_router
 from backend.routes.prompt_routes import router as prompt_router
 
 from backend.routes.analytics_routes import (
     router as analytics_router
 )
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
 app = FastAPI(
     title="AI Governance Dashboard",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
+
+app.include_router(auth_router)
 
 app.include_router(
     analytics_router

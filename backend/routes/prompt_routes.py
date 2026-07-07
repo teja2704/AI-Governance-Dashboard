@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from backend.auth import get_current_user
 from backend.database.db import get_db
 
 from backend.schemas.prompt_schema import (
@@ -23,7 +24,8 @@ from backend.services.llm_service import generate_response
 
 router = APIRouter(
     prefix="/prompts",
-    tags=["Prompts"]
+    tags=["Prompts"],
+    dependencies=[Depends(get_current_user)]
 )
 
 

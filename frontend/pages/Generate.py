@@ -1,7 +1,12 @@
-import streamlit as st
 import requests
+import streamlit as st
 
-st.title("🤖 Generate AI Response")
+from auth import API_BASE_URL, auth_headers, require_auth
+
+
+require_auth()
+
+st.title("Generate AI Response")
 
 st.caption(
     "Generate responses using Gemini and automatically store interactions for governance tracking."
@@ -20,44 +25,33 @@ prompt = st.text_area(
 col1, col2 = st.columns([1, 4])
 
 with col1:
-
     generate_button = st.button(
-        "🚀 Generate",
+        "Generate",
         use_container_width=True
     )
 
 if generate_button:
-
     if not prompt.strip():
-
-        st.warning(
-            "Please enter a prompt."
-        )
+        st.warning("Please enter a prompt.")
 
     else:
-
-        with st.spinner(
-            "Generating response..."
-        ):
-
+        with st.spinner("Generating response..."):
             response = requests.post(
-                "http://127.0.0.1:8000/prompts/generate",
+                f"{API_BASE_URL}/prompts/generate",
+                headers=auth_headers(),
                 json={
                     "prompt": prompt
                 }
             )
 
         if response.status_code == 200:
-
             result = response.json()
 
-            st.success(
-                "Response generated successfully."
-            )
+            st.success("Response generated successfully.")
 
             st.divider()
 
-            st.subheader("🤖 AI Response")
+            st.subheader("AI Response")
 
             st.text_area(
                 "Generated Output",
@@ -67,14 +61,8 @@ if generate_button:
             )
 
         else:
-
-            st.error(
-                f"API Error: {response.status_code}"
-            )
-
-            st.code(
-                response.text
-            )
+            st.error(f"API Error: {response.status_code}")
+            st.code(response.text)
 
 st.divider()
 

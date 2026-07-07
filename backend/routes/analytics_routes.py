@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from backend.auth import get_current_user
 from backend.database.db import get_db
 
 from backend.services.analytics_service import (
@@ -11,7 +12,8 @@ from backend.services.analytics_service import (
 
 router = APIRouter(
     prefix="/analytics",
-    tags=["Analytics"]
+    tags=["Analytics"],
+    dependencies=[Depends(get_current_user)]
 )
 
 

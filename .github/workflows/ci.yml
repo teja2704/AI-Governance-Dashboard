@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GEMINI_API_KEY: ci_dummy_gemini_api_key
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     # The current test suite sets DATABASE_URL to a temporary SQLite
     # database, so no PostgreSQL service container is required yet.

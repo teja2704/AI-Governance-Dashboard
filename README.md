@@ -189,6 +189,8 @@ Passwords are stored as Passlib hashes in the `users` table. JWT signing uses `J
 
 The Streamlit frontend stores the JWT only in server-side session memory and sends it as a Bearer token on API requests. It does not write the token to `localStorage`.
 
+**Rate limiting** is active on the `/auth/login` endpoint: a maximum of **5 requests per minute** is allowed per remote IP address. Requests that exceed this limit receive a `429 Too Many Requests` JSON response. This limit is enforced by [slowapi](https://github.com/laurents/slowapi) using an in-process memory store (no external cache required). The limiter uses the direct connecting IP (`get_remote_address`); if deployed behind a reverse proxy or load balancer, this will need updating to parse `X-Forwarded-For` correctly.
+
 See [docs/security-review.md](docs/security-review.md) for the current security check notes and remaining threat considerations.
 
 ## API Notes

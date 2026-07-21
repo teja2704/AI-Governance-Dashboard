@@ -7,3 +7,6 @@ __pycache__/
 .vscode/
 *.db
 *.log
+diff.txt
+run_ci.bat
+verify.bat

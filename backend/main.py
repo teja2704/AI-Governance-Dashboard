@@ -1,8 +1,12 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from backend.database.init_db import init_db
+from backend.rate_limiter import limiter
 from backend.routes.auth_routes import router as auth_router
 from backend.routes.evaluation_routes import router as evaluation_router
 from backend.routes.prompt_routes import router as prompt_router
@@ -24,6 +28,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(auth_router)
 

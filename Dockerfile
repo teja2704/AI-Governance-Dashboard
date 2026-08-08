@@ -28,9 +28,12 @@ COPY --from=builder /opt/venv /opt/venv
 COPY alembic.ini ./alembic.ini
 COPY backend ./backend
 COPY migrations ./migrations
+COPY entrypoint.sh ./entrypoint.sh
+
+RUN chmod +x /app/entrypoint.sh
 
 USER app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -50,10 +50,11 @@ def _render_logout() -> None:
 def _render_login_form() -> None:
     st.title("Sign in")
 
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Sign in")
+    username = st.text_input("Username", key="login_username")
+    password = st.text_input(
+        "Password", type="password", key="login_password"
+    )
+    submitted = st.button("Sign in", type="primary")
 
     if not submitted:
         return
@@ -80,6 +81,9 @@ def _render_login_form() -> None:
         st.session_state[TOKEN_KEY] = token
         st.session_state[USER_KEY] = username
         st.rerun()
+
+    elif response.status_code == 429:
+        st.error("Too many login attempts. Please wait a minute and try again.")
 
     elif response.status_code == 401:
         st.error("Invalid username or password.")

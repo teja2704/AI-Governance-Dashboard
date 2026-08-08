@@ -1,6 +1,7 @@
 import os
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
@@ -50,15 +51,37 @@ def _render_logout() -> None:
 def _render_login_form() -> None:
     st.title("Sign in")
 
-    with st.form("login_form"):
-        username = st.text_input("Username", key="login_username")
-        password = st.text_input(
-            "Password", type="password", key="login_password"
-        )
-        submitted = st.form_submit_button("Sign in", type="primary")
+    username = st.text_input("Username", key="login_username")
+    password = st.text_input(
+        "Password", type="password", key="login_password"
+    )
+    submitted = st.button("Sign in", type="primary", key="login_submit")
 
-    if not submitted:
-        return
+    # Simulate Enter-to-submit without st.form (which injects "This form"
+    # ARIA text that flashes briefly during Streamlit widget reconciliation).
+    components.html(
+        """
+        <script>
+        (function() {
+            const doc = window.parent.document;
+            doc.addEventListener('keydown', function handler(e) {
+                if (e.key !== 'Enter') return;
+                const active = doc.activeElement;
+                const tag = active ? active.tagName : '';
+                if (tag !== 'INPUT') return;
+                const btns = doc.querySelectorAll('button[kind="primaryFormSubmit"], button[data-testid="baseButton-primary"]');
+                for (const btn of btns) {
+                    if (btn.innerText.trim() === 'Sign in') {
+                        btn.click();
+                        return;
+                    }
+                }
+            });
+        })();
+        </script>
+        """,
+        height=0,
+    )
 
     if not username or not password:
         st.warning("Enter a username and password.")

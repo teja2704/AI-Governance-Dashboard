@@ -1,7 +1,7 @@
 import requests
 import streamlit as st
 
-from auth import API_BASE_URL, auth_headers, require_auth
+from auth import API_BASE_URL, api_get, require_auth
 
 
 st.set_page_config(
@@ -21,20 +21,12 @@ analyze prompt history, and evaluate governance metrics.
 """)
 
 try:
-    analytics_response = requests.get(
-        f"{API_BASE_URL}/analytics/",
-        headers=auth_headers()
-    )
-
-    kpi_response = requests.get(
-        f"{API_BASE_URL}/analytics/dashboard-kpis",
-        headers=auth_headers()
-    )
+    analytics_response = api_get(f"{API_BASE_URL}/analytics/")
+    kpi_response = api_get(f"{API_BASE_URL}/analytics/dashboard-kpis")
 
     if (
         analytics_response.status_code == 200
-        and
-        kpi_response.status_code == 200
+        and kpi_response.status_code == 200
     ):
         analytics = analytics_response.json()
         kpis = kpi_response.json()
@@ -81,8 +73,8 @@ Success Rate: {kpis["success_rate"]}%
 """
             )
 
-except Exception:
-    st.warning("Backend not available. Start FastAPI server.")
+except requests.RequestException:
+    st.warning("Backend not available. Check FastAPI service.")
 
 st.divider()
 

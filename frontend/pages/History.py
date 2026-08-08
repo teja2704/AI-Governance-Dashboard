@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 import streamlit as st
 
-from auth import API_BASE_URL, auth_headers, require_auth
+from auth import API_BASE_URL, api_get, require_auth
 
 
 require_auth()
@@ -15,10 +15,11 @@ st.caption(
 
 st.divider()
 
-response = requests.get(
-    f"{API_BASE_URL}/prompts/history",
-    headers=auth_headers()
-)
+try:
+    response = api_get(f"{API_BASE_URL}/prompts/history")
+except requests.RequestException:
+    st.error("Backend not reachable. Check the API service.")
+    st.stop()
 
 if response.status_code == 200:
     history_data = response.json()
@@ -116,8 +117,7 @@ if response.status_code == 200:
         ]
 
         st.dataframe(
-            df[available_columns],
-            width="stretch"
+            df[available_columns]
         )
 
         if not df.empty:

@@ -19,6 +19,17 @@ def auth_headers() -> dict[str, str]:
     }
 
 
+def api_get(url: str, **kwargs) -> requests.Response:
+    """Authenticated GET that clears session and reruns on 401."""
+    response = requests.get(url, headers=auth_headers(), **kwargs)
+
+    if response.status_code == 401:
+        _clear_auth()
+        st.rerun()
+
+    return response
+
+
 def _clear_auth() -> None:
     st.session_state.pop(TOKEN_KEY, None)
     st.session_state.pop(USER_KEY, None)

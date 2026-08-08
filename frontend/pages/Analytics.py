@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 import streamlit as st
 
-from auth import API_BASE_URL, auth_headers, require_auth
+from auth import API_BASE_URL, api_get, require_auth
 
 
 require_auth()
@@ -15,127 +15,126 @@ st.caption(
 
 st.divider()
 
-response = requests.get(
-    f"{API_BASE_URL}/analytics/",
-    headers=auth_headers()
-)
+try:
+    response = api_get(f"{API_BASE_URL}/analytics/")
 
-if response.status_code == 200:
-    analytics = response.json()
+    if response.status_code == 200:
+        analytics = response.json()
 
-    st.subheader("Core Metrics")
+        st.subheader("Core Metrics")
 
-    col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns(3)
 
-    with col1:
-        st.metric(
-            "Total Requests",
-            analytics["total_requests"]
-        )
+        with col1:
+            st.metric(
+                "Total Requests",
+                analytics["total_requests"]
+            )
 
-    with col2:
-        st.metric(
-            "AI Requests",
-            analytics["ai_requests"]
-        )
-
-    with col3:
-        st.metric(
-            "Manual Requests",
-            analytics["manual_requests"]
-        )
-
-    st.divider()
-
-    st.subheader("Content Metrics")
-
-    col4, col5 = st.columns(2)
-
-    with col4:
-        st.metric(
-            "Average Prompt Length",
-            analytics["average_prompt_length"]
-        )
-
-    with col5:
-        st.metric(
-            "Average Response Length",
-            analytics["average_response_length"]
-        )
-
-    st.divider()
-
-    st.subheader("Reliability Metrics")
-
-    col6, col7 = st.columns(2)
-
-    with col6:
-        st.metric(
-            "Success Rate (%)",
-            analytics["success_rate"]
-        )
-
-    with col7:
-        st.metric(
-            "Failure Rate (%)",
-            analytics["failure_rate"]
-        )
-
-    st.divider()
-
-    st.subheader("Request Distribution")
-
-    chart_data = pd.DataFrame(
-        {
-            "Metric": [
+        with col2:
+            st.metric(
                 "AI Requests",
-                "Manual Requests"
-            ],
-            "Value": [
-                analytics["ai_requests"],
+                analytics["ai_requests"]
+            )
+
+        with col3:
+            st.metric(
+                "Manual Requests",
                 analytics["manual_requests"]
-            ]
-        }
-    )
+            )
 
-    st.bar_chart(
-        chart_data.set_index("Metric")
-    )
+        st.divider()
 
-else:
-    st.error("Unable to load analytics.")
+        st.subheader("Content Metrics")
+
+        col4, col5 = st.columns(2)
+
+        with col4:
+            st.metric(
+                "Average Prompt Length",
+                analytics["average_prompt_length"]
+            )
+
+        with col5:
+            st.metric(
+                "Average Response Length",
+                analytics["average_response_length"]
+            )
+
+        st.divider()
+
+        st.subheader("Reliability Metrics")
+
+        col6, col7 = st.columns(2)
+
+        with col6:
+            st.metric(
+                "Success Rate (%)",
+                analytics["success_rate"]
+            )
+
+        with col7:
+            st.metric(
+                "Failure Rate (%)",
+                analytics["failure_rate"]
+            )
+
+        st.divider()
+
+        st.subheader("Request Distribution")
+
+        chart_data = pd.DataFrame(
+            {
+                "Metric": [
+                    "AI Requests",
+                    "Manual Requests"
+                ],
+                "Value": [
+                    analytics["ai_requests"],
+                    analytics["manual_requests"]
+                ]
+            }
+        )
+
+        st.bar_chart(
+            chart_data.set_index("Metric")
+        )
+
+    else:
+        st.error("Unable to load analytics.")
+
+except requests.RequestException:
+    st.error("Backend not reachable. Check the API service.")
 
 st.divider()
 
 st.subheader("Model Usage Analytics")
 
-model_response = requests.get(
-    f"{API_BASE_URL}/analytics/model-usage",
-    headers=auth_headers()
-)
+try:
+    model_response = api_get(f"{API_BASE_URL}/analytics/model-usage")
 
-if model_response.status_code == 200:
-    model_data = model_response.json()
+    if model_response.status_code == 200:
+        model_data = model_response.json()
 
-    if model_data:
-        model_df = pd.DataFrame(model_data)
+        if model_data:
+            model_df = pd.DataFrame(model_data)
 
-        st.bar_chart(
-            model_df.set_index("model")
-        )
+            st.bar_chart(
+                model_df.set_index("model")
+            )
 
-        st.markdown("### Model Usage Details")
+            st.markdown("### Model Usage Details")
 
-        st.dataframe(
-            model_df,
-            width="stretch"
-        )
+            st.dataframe(model_df)
+
+        else:
+            st.info("No model usage data available.")
 
     else:
-        st.info("No model usage data available.")
+        st.error("Unable to load model usage data.")
 
-else:
-    st.error("Unable to load model usage data.")
+except requests.RequestException:
+    st.error("Backend not reachable. Check the API service.")
 
 st.divider()
 

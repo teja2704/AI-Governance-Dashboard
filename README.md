@@ -76,10 +76,14 @@ AI-Governance-Dashboard/
 |-- frontend/
 |   |-- app.py
 |   `-- pages/
+|-- migrations/
 |-- assets/
 |-- docs/
-|-- migrations/
+|-- .github/workflows/
 |-- Dockerfile
+|-- Dockerfile.frontend
+|-- docker-compose.yml
+|-- entrypoint.sh
 |-- alembic.ini
 |-- requirements-backend.txt
 |-- requirements-frontend.txt
@@ -164,22 +168,51 @@ streamlit run frontend/app.py
 
 Sign in with the bootstrap credentials configured in `.env`.
 
-## Docker Backend
+## Running with Docker Compose
 
-Build the backend image:
-
-```bash
-docker build -t ai-governance-backend .
-```
-
-Run the backend container with configuration supplied through environment variables:
+The recommended way to run the full stack (PostgreSQL, backend, frontend) locally or on a single-host deployment:
 
 ```bash
-docker run --env-file .env ai-governance-backend alembic upgrade head
-docker run --env-file .env -p 8000:8000 ai-governance-backend
+cp .env.example .env
+# Edit .env with real values (see required variables below)
+docker compose up --build
 ```
 
-PostgreSQL is not included in this Dockerfile. A database host must already be reachable through `DATABASE_URL`.
+This starts three services:
+
+| Service | Port | Notes |
+|---|---|---|
+| `db` | 5432 | PostgreSQL 16, health-checked before backend starts |
+| `backend` | 8000 | Runs `alembic upgrade head` automatically on startup, then uvicorn |
+| `frontend` | 8501 | Streamlit, connects to backend via internal Docker network |
+
+Database migrations are applied automatically via `entrypoint.sh` — no manual `alembic upgrade head` step is required when using Docker Compose.
+
+### Required `.env` variables
+
+```
+DATABASE_URL
+GEMINI_API_KEY
+JWT_SECRET_KEY
+JWT_ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES
+AUTH_BOOTSTRAP_USERNAME
+AUTH_BOOTSTRAP_PASSWORD
+POSTGRES_USER
+POSTGRES_PASSWORD
+POSTGRES_DB
+```
+
+See `.env.example` for the full template with descriptions. Never commit `.env` — it is gitignored.
+
+### Health check
+
+Once all containers are up, verify the backend is healthy:
+
+```bash
+curl http://localhost:8000/health
+# {"status": "healthy"}
+```
 
 ## Security Notes
 
@@ -208,9 +241,18 @@ Generated Gemini responses are saved automatically as response records tied to t
 
 Phase notes and the follow-up issue queue are maintained in [docs/implementation-phases.md](docs/implementation-phases.md).
 
+## CI / Continuous Integration
+
+GitHub Actions runs on every push and pull request to `main`:
+
+* **Tests** — `pytest` against all route and rate-limit tests
+* **Dependency audit** — `pip-audit` scans for known CVEs in backend dependencies
+
+See [`.github/workflows/ci.yml`](.github/workflows/ci.yml) for the full pipeline definition.
+
 ## Future Enhancements
 
 * PDF report generation
-* Full Docker Compose stack with PostgreSQL
-* Cloud deployment
 * Multi-model support
+* Rate limiter backed by Redis (for multi-instance / load-balanced deployments)
+* `X-Forwarded-For` parsing for correct IP attribution behind a reverse proxy

@@ -50,11 +50,12 @@ def _render_logout() -> None:
 def _render_login_form() -> None:
     st.title("Sign in")
 
-    username = st.text_input("Username", key="login_username")
-    password = st.text_input(
-        "Password", type="password", key="login_password"
-    )
-    submitted = st.button("Sign in", type="primary")
+    with st.form("login_form"):
+        username = st.text_input("Username", key="login_username")
+        password = st.text_input(
+            "Password", type="password", key="login_password"
+        )
+        submitted = st.form_submit_button("Sign in", type="primary")
 
     if not submitted:
         return

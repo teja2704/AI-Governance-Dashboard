@@ -4,17 +4,17 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-db_file = tempfile.NamedTemporaryFile(
-    delete=False,
-    suffix=".db"
+TEST_DB_PATH = (
+    Path(tempfile.gettempdir()) /
+    f"ai_governance_dashboard_tests_{os.getpid()}.db"
 )
-db_file.close()
 
-os.environ["DATABASE_URL"] = f"sqlite:///{Path(db_file.name).as_posix()}"
+os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH.as_posix()}"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-with-at-least-32-bytes"
 os.environ["JWT_ALGORITHM"] = "HS256"
 os.environ["AUTH_BOOTSTRAP_USERNAME"] = "admin@example.com"
 os.environ["AUTH_BOOTSTRAP_PASSWORD"] = "AdminPassword123!"
+os.environ["GEMINI_API_KEY"] = "test-gemini-api-key"
 
 from alembic import command
 from alembic.config import Config
@@ -36,7 +36,7 @@ class AuthIntegrationTest(unittest.TestCase):
         from backend.database.db import engine
 
         engine.dispose()
-        Path(db_file.name).unlink(missing_ok=True)
+        TEST_DB_PATH.unlink(missing_ok=True)
 
     def test_protected_route_requires_jwt(self):
         with TestClient(app) as client:
@@ -158,6 +158,38 @@ class AuthIntegrationTest(unittest.TestCase):
                 "banned_word:forbidden",
                 flags
             )
+
+    def test_generation_failure_returns_error_and_records_failure(self):
+        with TestClient(app) as client:
+            headers = self._auth_headers(client)
+
+            with patch(
+                "backend.routes.prompt_routes.generate_response",
+                side_effect=RuntimeError("provider unavailable")
+            ):
+                response = client.post(
+                    "/prompts/generate",
+                    headers=headers,
+                    json={
+                        "prompt": "Trigger an upstream failure."
+                    }
+                )
+
+            self.assertEqual(response.status_code, 502)
+
+            body = response.json()
+            self.assertEqual(
+                body["detail"]["message"],
+                "AI generation failed. Please try again shortly."
+            )
+
+            history = client.get(
+                "/prompts/history",
+                headers=headers
+            )
+
+            self.assertEqual(history.status_code, 200)
+            self.assertEqual(history.json()[0]["status"], "FAILED")
 
     def test_human_evaluation_requires_auth(self):
         with TestClient(app) as client:

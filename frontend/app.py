@@ -107,18 +107,3 @@ with col2:
 **AI Model**
 - Gemini 2.5 Flash
 """)
-
-st.divider()
-
-st.sidebar.title("AI Governance")
-
-st.sidebar.markdown("""
-### Navigation
-
-Use the pages below to:
-
-- Dashboard
-- Generate
-- History
-- Analytics
-""")

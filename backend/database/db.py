@@ -8,6 +8,9 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL must be set before starting the backend.")
+
 engine_kwargs = {}
 
 if DATABASE_URL and DATABASE_URL.startswith("sqlite"):

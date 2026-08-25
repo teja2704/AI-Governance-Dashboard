@@ -5,8 +5,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY must be set before starting the backend.")
+
 client = genai.Client(
-    api_key=os.getenv("GEMINI_API_KEY")
+    api_key=GEMINI_API_KEY
 )
 
 

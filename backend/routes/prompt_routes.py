@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.auth import get_current_user
@@ -67,20 +67,37 @@ def generate_ai_response(
             request.prompt
         )
 
-        status = "SUCCESS"
+        prompt_status = "SUCCESS"
 
-    except Exception as e:
+    except Exception:
 
-        ai_response = str(e)
+        ai_response = "AI generation failed. Please try again shortly."
 
-        status = "FAILED"
+        prompt_status = "FAILED"
+
+        saved_prompt, saved_response = create_prompt_with_response(
+            db=db,
+            prompt_text=request.prompt,
+            response_text=ai_response,
+            model_name="gemini-2.5-flash",
+            status=prompt_status
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={
+                "message": ai_response,
+                "prompt_id": saved_prompt.id,
+                "response_id": saved_response.id
+            }
+        )
 
     saved_prompt, saved_response = create_prompt_with_response(
         db=db,
         prompt_text=request.prompt,
         response_text=ai_response,
         model_name="gemini-2.5-flash",
-        status=status
+        status=prompt_status
     )
 
     return GenerateResponse(

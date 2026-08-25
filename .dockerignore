@@ -1,7 +1,6 @@
 .env
 .git
 .idea
-.streamlit
 .vscode
 __pycache__
 *.pyc

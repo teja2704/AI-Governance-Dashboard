@@ -8,6 +8,10 @@ AI Governance Dashboard is a full-stack AI monitoring and governance platform bu
 
 The platform lets authenticated users generate AI responses, store interactions, monitor model performance, analyze prompt history, and track governance metrics through an interactive dashboard.
 
+### Live Deployment
+- **Frontend (Streamlit)**: [https://ravishing-integrity-production.up.railway.app](https://ravishing-integrity-production.up.railway.app)
+- **Backend (FastAPI)**: [https://ai-governance-dashboard-production-4c62.up.railway.app](https://ai-governance-dashboard-production-4c62.up.railway.app)
+
 ## Features
 
 ### Authentication

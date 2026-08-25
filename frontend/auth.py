@@ -4,7 +4,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://ai-governance-dashboard-production-4c62.up.railway.app")
 TOKEN_KEY = "access_token"
 USER_KEY = "auth_username"
 
@@ -36,8 +36,18 @@ def _clear_auth() -> None:
     st.session_state.pop(USER_KEY, None)
 
 
-def _render_logout() -> None:
+def _render_authenticated_sidebar() -> None:
     with st.sidebar:
+        st.title("AI Governance")
+
+        st.page_link("app.py", label="Home")
+        st.page_link("pages/Dashboard.py", label="Dashboard")
+        st.page_link("pages/Generate.py", label="Generate")
+        st.page_link("pages/History.py", label="History")
+        st.page_link("pages/Analytics.py", label="Analytics")
+
+        st.divider()
+
         username = st.session_state.get(USER_KEY)
 
         if username:
@@ -83,6 +93,9 @@ def _render_login_form() -> None:
         height=0,
     )
 
+    if not submitted:
+        return
+
     if not username or not password:
         st.warning("Enter a username and password.")
         return
@@ -118,7 +131,7 @@ def _render_login_form() -> None:
 
 def require_auth() -> None:
     if st.session_state.get(TOKEN_KEY):
-        _render_logout()
+        _render_authenticated_sidebar()
         return
 
     _render_login_form()

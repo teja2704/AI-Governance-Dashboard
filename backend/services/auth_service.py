@@ -40,13 +40,26 @@ def get_user_by_username(
     )
 
 
+def get_user_by_email(
+    db: Session,
+    email: str
+) -> User | None:
+    return (
+        db.query(User)
+        .filter(User.email == email)
+        .first()
+    )
+
+
 def create_user(
     db: Session,
     username: str,
+    email: str,
     password: str
 ) -> User:
     user = User(
         username=username,
+        email=email,
         hashed_password=hash_password(password)
     )
 
@@ -135,6 +148,9 @@ def decode_access_token(token: str) -> str | None:
     except (InvalidTokenError, RuntimeError):
         return None
 
+    if payload.get("purpose") == "password_reset":
+        return None
+
     subject = payload.get("sub")
 
     if not isinstance(subject, str):
@@ -161,5 +177,74 @@ def ensure_bootstrap_user(db: Session) -> User | None:
     return create_user(
         db,
         username,
+        username,  # email = username for bootstrap
         password
     )
+
+
+import secrets
+import string
+import requests
+
+
+def generate_otp() -> str:
+    """Generate a 6-digit numeric OTP."""
+    return "".join(secrets.choice(string.digits) for _ in range(6))
+
+
+def send_otp_email(email: str, otp: str) -> None:
+    """Send OTP via Resend API using standard requests."""
+    api_key = os.getenv("RESEND_API_KEY")
+    if not api_key:
+        print(f"Warning: RESEND_API_KEY not set. OTP for {email} is {otp}")
+        return
+
+    url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "from": "noreply@resend.dev",
+        "to": [email],
+        "subject": "Password Reset Code",
+        "html": f"<p>Your reset code is <strong>{otp}</strong>, expires in 10 minutes.</p>"
+    }
+    
+    try:
+        requests.post(url, headers=headers, json=payload, timeout=10)
+    except requests.RequestException as e:
+        print(f"Failed to send email to {email}: {e}")
+
+
+def create_reset_token(user_id: int) -> str:
+    expires_at = datetime.now(UTC) + timedelta(minutes=5)
+    payload = {
+        "sub": str(user_id),
+        "purpose": "password_reset",
+        "exp": expires_at
+    }
+    return jwt.encode(payload, _jwt_secret(), algorithm=_jwt_algorithm())
+
+
+def decode_reset_token(token: str) -> int | None:
+    try:
+        payload = jwt.decode(
+            token,
+            _jwt_secret(),
+            algorithms=[_jwt_algorithm()]
+        )
+    except (InvalidTokenError, RuntimeError):
+        return None
+
+    if payload.get("purpose") != "password_reset":
+        return None
+
+    subject = payload.get("sub")
+    if not isinstance(subject, str):
+        return None
+
+    try:
+        return int(subject)
+    except ValueError:
+        return None

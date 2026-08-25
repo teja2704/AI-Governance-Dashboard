@@ -35,14 +35,22 @@ if generate_button:
         st.warning("Please enter a prompt.")
 
     else:
-        with st.spinner("Generating response..."):
-            response = requests.post(
-                f"{API_BASE_URL}/prompts/generate",
-                headers=auth_headers(),
-                json={
-                    "prompt": prompt
-                }
+        try:
+            with st.spinner("Generating response..."):
+                response = requests.post(
+                    f"{API_BASE_URL}/prompts/generate",
+                    headers=auth_headers(),
+                    json={
+                        "prompt": prompt
+                    },
+                    timeout=30
+                )
+        except requests.RequestException:
+            st.error(
+                "Unable to reach the generation service. "
+                "Please try again shortly."
             )
+            st.stop()
 
         if response.status_code == 200:
             result = response.json()
@@ -61,8 +69,20 @@ if generate_button:
             )
 
         else:
-            st.error(f"API Error: {response.status_code}")
-            st.code(response.text)
+            error_message = "AI generation failed. Please try again shortly."
+
+            try:
+                error_body = response.json()
+                detail = error_body.get("detail")
+
+                if isinstance(detail, str):
+                    error_message = detail
+                elif isinstance(detail, dict):
+                    error_message = detail.get("message", error_message)
+            except ValueError:
+                pass
+
+            st.error(error_message)
 
 st.divider()
 

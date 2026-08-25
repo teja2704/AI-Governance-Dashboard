@@ -7,16 +7,17 @@ from pathlib import Path
 # Environment must be set before any backend module is imported so that
 # init_db() and the ORM engine pick up the correct SQLite URL.
 # ---------------------------------------------------------------------------
-db_file = tempfile.NamedTemporaryFile(
-    delete=False,
-    suffix=".db"
+TEST_DB_PATH = (
+    Path(tempfile.gettempdir()) /
+    f"ai_governance_dashboard_tests_{os.getpid()}.db"
 )
-db_file.close()
 
+os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH.as_posix()}"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-with-at-least-32-bytes"
 os.environ["JWT_ALGORITHM"] = "HS256"
 os.environ["AUTH_BOOTSTRAP_USERNAME"] = "admin@example.com"
 os.environ["AUTH_BOOTSTRAP_PASSWORD"] = "AdminPassword123!"
+os.environ["GEMINI_API_KEY"] = "test-gemini-api-key"
 
 from alembic import command
 from alembic.config import Config
@@ -38,32 +39,6 @@ class RateLimitTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        import backend.database.db as db_module
-        import backend.database.init_db as init_db_module
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker
-        from sqlalchemy.pool import StaticPool
-
-        os.environ["DATABASE_URL"] = f"sqlite:///{Path(db_file.name).as_posix()}"
-
-        db_module.engine.dispose()
-
-        database_url = os.environ["DATABASE_URL"]
-        engine_kwargs = {}
-        if database_url.startswith("sqlite"):
-            engine_kwargs["connect_args"] = {"check_same_thread": False}
-            if database_url in {"sqlite://", "sqlite:///:memory:"}:
-                engine_kwargs["poolclass"] = StaticPool
-
-        db_module.engine = create_engine(database_url, **engine_kwargs)
-        db_module.SessionLocal = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=db_module.engine,
-        )
-        init_db_module.engine = db_module.engine
-        init_db_module.SessionLocal = db_module.SessionLocal
-
         alembic_cfg = Config("alembic.ini")
         command.upgrade(alembic_cfg, "head")
 
@@ -74,7 +49,7 @@ class RateLimitTest(unittest.TestCase):
         from backend.database.db import engine
 
         engine.dispose()
-        Path(db_file.name).unlink(missing_ok=True)
+        TEST_DB_PATH.unlink(missing_ok=True)
 
     def test_login_rate_limit(self):
         """

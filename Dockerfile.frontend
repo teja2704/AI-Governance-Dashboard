@@ -28,6 +28,7 @@ RUN groupadd --system app \
 
 COPY --from=builder /opt/venv /opt/venv
 COPY frontend ./frontend
+COPY .streamlit ./.streamlit
 
 RUN mkdir -p /app/.streamlit \
     && chown -R app:app /app

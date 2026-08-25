@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 TEST_DB_PATH = (
     Path(tempfile.gettempdir()) /
-    f"ai_governance_dashboard_authflow_tests_{os.getpid()}.db"
+    f"ai_governance_dashboard_tests_{os.getpid()}.db"
 )
 
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH.as_posix()}"

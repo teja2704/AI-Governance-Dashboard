@@ -37,7 +37,7 @@ _cors_env = os.getenv(
     "http://localhost:3000,http://localhost:8501"
 )
 CORS_ORIGINS: list[str] = [o.strip() for o in _cors_env.split(",") if o.strip()]
-print("CORS_ORIGINS:", CORS_ORIGINS)
+
 
 
 @asynccontextmanager

@@ -10,19 +10,21 @@ from backend.schemas.auth_schema import (
     ForgotPasswordRequest,
     VerifyOtpRequest,
     ResetTokenResponse,
-    ResetPasswordRequest
+    ResetPasswordRequest,
+    GoogleLoginRequest
 )
 from backend.services.auth_service import (
     authenticate_user,
     create_access_token,
     create_user,
-    get_user_by_username,
     get_user_by_email,
     generate_otp,
     send_otp_email,
     create_reset_token,
     decode_reset_token,
-    hash_password
+    hash_password,
+    verify_google_token,
+    get_or_create_google_user
 )
 from backend.database.models import PasswordReset, User
 from datetime import datetime, UTC
@@ -45,19 +47,19 @@ def login(
 ):
     user = authenticate_user(
         db,
-        body.username,
+        body.email,
         body.password
     )
 
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password.",
+            detail="Invalid email or password.",
             headers={"WWW-Authenticate": "Bearer"}
         )
 
     return TokenResponse(
-        access_token=create_access_token(user.username)
+        access_token=create_access_token(user.email)
     )
 
 
@@ -75,21 +77,41 @@ def signup(
             detail="Password must be at least 8 characters long."
         )
 
-    if get_user_by_username(db, body.username):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Username already taken."
-        )
-
     if get_user_by_email(db, body.email):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already taken."
         )
 
-    user = create_user(db, body.username, body.email, body.password)
+    user = create_user(db, body.first_name, body.last_name, body.email, body.password)
     return TokenResponse(
-        access_token=create_access_token(user.username)
+        access_token=create_access_token(user.email)
+    )
+
+@router.post(
+    "/google",
+    response_model=TokenResponse
+)
+def google_login(
+    body: GoogleLoginRequest,
+    db: Session = Depends(get_db)
+):
+    google_info = verify_google_token(body.id_token)
+    if not google_info:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google token"
+        )
+        
+    user = get_or_create_google_user(db, google_info)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not create user"
+        )
+        
+    return TokenResponse(
+        access_token=create_access_token(user.email)
     )
 
 

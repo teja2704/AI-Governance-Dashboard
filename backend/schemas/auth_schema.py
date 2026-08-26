@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class LoginRequest(BaseModel):
-    username: str
+    email: str
     password: str
 
 
@@ -12,9 +12,13 @@ class TokenResponse(BaseModel):
 
 
 class SignupRequest(BaseModel):
-    username: str
+    first_name: str
+    last_name: str
     email: str
     password: str
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str
 
 
 class ForgotPasswordRequest(BaseModel):

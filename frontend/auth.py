@@ -64,81 +64,91 @@ def _render_login_form() -> None:
     tab1, tab2, tab3 = st.tabs(["Sign in", "Sign up", "Forgot Password"])
 
     with tab1:
-        username = st.text_input("Username", key="login_username")
-        password = st.text_input(
-            "Password", type="password", key="login_password"
-        )
-        submitted = st.button("Sign in", type="primary", key="login_submit")
+        if "login_step" not in st.session_state:
+            st.session_state.login_step = "email"
 
-        # Simulate Enter-to-submit without st.form (which injects "This form"
-        # ARIA text that flashes briefly during Streamlit widget reconciliation).
-        components.html(
-            """
-            <script>
-            (function() {
-                const doc = window.parent.document;
-                doc.addEventListener('keydown', function handler(e) {
-                    if (e.key !== 'Enter') return;
-                    const active = doc.activeElement;
-                    const tag = active ? active.tagName : '';
-                    if (tag !== 'INPUT') return;
-                    const btns = doc.querySelectorAll('button[kind="primaryFormSubmit"], button[data-testid="baseButton-primary"]');
-                    for (const btn of btns) {
-                        if (btn.innerText.trim() === 'Sign in') {
-                            btn.click();
-                            return;
-                        }
-                    }
-                });
-            })();
-            </script>
-            """,
-            height=0,
-        )
-
-        if submitted:
-            if not username or not password:
-                st.warning("Enter a username and password.")
-            else:
-                try:
-                    response = requests.post(
-                        f"{API_BASE_URL}/auth/login",
-                        json={
-                            "username": username,
-                            "password": password
-                        },
-                        timeout=10
-                    )
+        if st.session_state.login_step == "email":
+            email = st.text_input("Email", key="login_email")
+            submitted = st.button("Continue", type="primary", key="login_continue")
+            
+            if submitted:
+                if not email:
+                    st.warning("Please enter your email.")
+                else:
+                    st.session_state.login_email_val = email
+                    st.session_state.login_step = "password"
+                    st.rerun()
                     
-                    if response.status_code == 200:
-                        token = response.json()["access_token"]
-                        st.session_state[TOKEN_KEY] = token
-                        st.session_state[USER_KEY] = username
-                        st.rerun()
-                    elif response.status_code == 429:
-                        st.error("Too many login attempts. Please wait a minute and try again.")
-                    elif response.status_code == 401:
-                        st.error("Invalid username or password.")
-                    else:
-                        st.error(f"Login failed: {response.status_code}")
-                except requests.RequestException:
-                    st.error("Unable to reach the authentication service.")
+            st.divider()
+            if st.button("Continue with Google", key="login_google"):
+                st.info("Google OAuth flow will be fully implemented in the frontend migration.")
+                
+        elif st.session_state.login_step == "password":
+            st.write(f"Signing in as: **{st.session_state.login_email_val}**")
+            
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                if st.button("Back", key="login_back"):
+                    st.session_state.login_step = "email"
+                    st.rerun()
+                    
+            password = st.text_input(
+                "Password", type="password", key="login_password"
+            )
+            submitted = st.button("Sign in", type="primary", key="login_submit")
+
+            if submitted:
+                if not password:
+                    st.warning("Enter a password.")
+                else:
+                    try:
+                        response = requests.post(
+                            f"{API_BASE_URL}/auth/login",
+                            json={
+                                "email": st.session_state.login_email_val,
+                                "password": password
+                            },
+                            timeout=10
+                        )
+                        
+                        if response.status_code == 200:
+                            token = response.json()["access_token"]
+                            st.session_state[TOKEN_KEY] = token
+                            st.session_state[USER_KEY] = st.session_state.login_email_val
+                            # Clear login state on success
+                            st.session_state.pop("login_step", None)
+                            st.session_state.pop("login_email_val", None)
+                            st.rerun()
+                        elif response.status_code == 429:
+                            st.error("Too many login attempts. Please wait a minute and try again.")
+                        elif response.status_code == 401:
+                            st.error("Invalid email or password.")
+                        else:
+                            st.error(f"Login failed: {response.status_code}")
+                    except requests.RequestException:
+                        st.error("Unable to reach the authentication service.")
 
     with tab2:
-        signup_username = st.text_input("Username", key="signup_username")
+        signup_first_name = st.text_input("First Name", key="signup_first")
+        signup_last_name = st.text_input("Last Name", key="signup_last")
         signup_email = st.text_input("Email", key="signup_email")
         signup_password = st.text_input("Password", type="password", key="signup_password")
         signup_submitted = st.button("Create Account", type="primary", key="signup_submit")
         
+        st.divider()
+        if st.button("Continue with Google", key="signup_google"):
+            st.info("Google OAuth flow will be fully implemented in the frontend migration.")
+            
         if signup_submitted:
-            if not signup_username or not signup_email or not signup_password:
+            if not signup_first_name or not signup_last_name or not signup_email or not signup_password:
                 st.warning("All fields are required.")
             else:
                 try:
                     response = requests.post(
                         f"{API_BASE_URL}/auth/signup",
                         json={
-                            "username": signup_username,
+                            "first_name": signup_first_name,
+                            "last_name": signup_last_name,
                             "email": signup_email,
                             "password": signup_password
                         },
@@ -147,7 +157,7 @@ def _render_login_form() -> None:
                     if response.status_code == 200:
                         st.success("Account created successfully! Please switch to the 'Sign in' tab to log in.")
                     elif response.status_code == 409:
-                        st.error(response.json().get("detail", "Username or email already taken."))
+                        st.error(response.json().get("detail", "Email already taken."))
                     else:
                         st.error(f"Signup failed: {response.status_code}")
                 except requests.RequestException:

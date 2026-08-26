@@ -5,7 +5,9 @@ __pycache__/
 .idea/
 .vscode/
 *.db
+*.sqlite
 *.log
 diff.txt
 run_ci.bat
 verify.bat
+node_modules/

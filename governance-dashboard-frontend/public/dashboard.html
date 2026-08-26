@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — AI Governance</title>
+  <meta name="description" content="Monitor AI usage, model performance, and governance KPIs for your AI Governance Dashboard." />
+  <link rel="stylesheet" href="/css/style.css" />
+  <!-- Chart.js via CDN — required for Request Distribution + Model Usage charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="/config.js"></script>
+</head>
+<body>
+
+  <!-- ── Shared top nav ─────────────────────────────────────────────────────── -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:24px;">
+      <span class="topbar-brand">AI Governance</span>
+      <nav>
+        <a href="/dashboard.html" class="active">Dashboard</a>
+        <a href="/generate.html">Generate</a>
+        <a href="/history.html">History</a>
+      </nav>
+    </div>
+    <div class="topbar-right">
+      <button id="logout-btn">Sign out</button>
+    </div>
+  </div>
+
+  <!-- ── Page content ───────────────────────────────────────────────────────── -->
+  <div class="page-content">
+
+    <div class="page-header">
+      <h1>Dashboard</h1>
+      <p>Monitor AI usage, model performance, and governance metrics.</p>
+    </div>
+
+    <!-- Loading state -->
+    <div id="dashboard-loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      Loading dashboard data…
+    </div>
+
+    <!-- Error state -->
+    <div id="dashboard-error" class="error-banner hidden"></div>
+
+    <!-- Main content (hidden until data loads) -->
+    <div id="dashboard-content" class="hidden">
+
+      <!-- ── Section 1: Core KPIs (/analytics/) ──────────────────────────── -->
+      <p class="section-title">Core Metrics</p>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-total">—</div>
+          <div class="kpi-label">Total Requests</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-ai">—</div>
+          <div class="kpi-label">AI Requests</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-manual">—</div>
+          <div class="kpi-label">Manual Requests</div>
+        </div>
+      </div>
+
+      <hr class="section-divider" />
+
+      <!-- ── Section 2: Performance (/analytics/dashboard-kpis) ─────────── -->
+      <p class="section-title">Performance</p>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-success-rate">—</div>
+          <div class="kpi-label">Success Rate</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-failed">—</div>
+          <div class="kpi-label">Failed Requests</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-longest">—</div>
+          <div class="kpi-label">Longest Response (chars)</div>
+        </div>
+      </div>
+
+      <hr class="section-divider" />
+
+      <!-- ── Section 3: Request Distribution chart ─────────────────────── -->
+      <p class="section-title">Request Distribution</p>
+      <div class="chart-card">
+        <canvas id="chart-distribution"></canvas>
+      </div>
+
+      <hr class="section-divider" />
+
+      <!-- ── Section 4: Model Insights (/analytics/model-usage) ─────────── -->
+      <div id="model-insights-section">
+        <p class="section-title">Model Usage</p>
+        <div class="chart-card" style="margin-bottom:16px;">
+          <canvas id="chart-model-usage"></canvas>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Request Count</th>
+              </tr>
+            </thead>
+            <tbody id="model-table-body">
+              <tr><td colspan="2" class="empty-state">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <hr class="section-divider" />
+
+      <!-- ── Section 5: System Health + Most Used Model ─────────────────── -->
+      <p class="section-title">System Insights</p>
+      <div class="info-box-grid">
+        <div class="info-box info-box--info">
+          <div class="info-box-label">Most Used Model</div>
+          <div class="info-box-value" id="info-most-used-model">—</div>
+        </div>
+        <div class="info-box info-box--success">
+          <div class="info-box-label">System Health</div>
+          <div class="info-box-value" id="info-system-health">—</div>
+        </div>
+      </div>
+
+      <hr class="section-divider" />
+
+      <!-- ── Section 6: Latest Prompt ───────────────────────────────────── -->
+      <p class="section-title">Latest Prompt</p>
+      <div class="read-only-box" id="latest-prompt">—</div>
+
+    </div><!-- /#dashboard-content -->
+  </div><!-- /.page-content -->
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

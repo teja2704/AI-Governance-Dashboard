@@ -4,107 +4,153 @@
 
 ## Overview
 
-AI Governance Dashboard is a full-stack AI monitoring and governance platform built with FastAPI, PostgreSQL, Streamlit, and Google's Gemini API.
-
-The platform lets authenticated users generate AI responses, store interactions, monitor model performance, analyze prompt history, and track governance metrics through an interactive dashboard.
+AI Governance Dashboard is a full-stack AI monitoring and governance platform. It lets authenticated users generate AI responses via Google Gemini, store and inspect interactions, monitor model performance, and track governance metrics through an interactive dashboard.
 
 ### Live Deployment
-- **Frontend (Streamlit)**: [https://ravishing-integrity-production.up.railway.app](https://ravishing-integrity-production.up.railway.app)
-- **Backend (FastAPI)**: [https://ai-governance-dashboard-production-4c62.up.railway.app](https://ai-governance-dashboard-production-4c62.up.railway.app)
+
+| Service | URL |
+|---|---|
+| **Frontend (Node.js)** | _To be updated after Railway deployment — see [Part 2 deployment steps](#deploying-the-node-frontend-to-railway)_ |
+| **Backend API (FastAPI)** | [https://ai-governance-dashboard-production-4c62.up.railway.app](https://ai-governance-dashboard-production-4c62.up.railway.app) |
+| **API Docs (Swagger UI)** | [https://ai-governance-dashboard-production-4c62.up.railway.app/docs](https://ai-governance-dashboard-production-4c62.up.railway.app/docs) |
+
+> **Note — archived Streamlit frontend**: An earlier frontend at `https://ravishing-integrity-production.up.railway.app` (Streamlit) is **no longer actively deployed or maintained**. The Streamlit source code (`frontend/`) remains in the repository for historical reference but is not the active UI. It was replaced by the Node.js frontend for better control over auth flows (multi-step login, OTP, OAuth hooks), custom UI design, and a more traditional HTML/CSS/JS stack.
+
+---
 
 ## Features
 
 ### Authentication
 
-* JWT login endpoint for backend access
-* Password hashing with Passlib
-* Protected API routers for prompts and analytics
-* Streamlit login form with in-memory token storage
+* Two-step email + password login (email first, then password — mirrors a modern auth UX)
+* User signup with first/last name, email, and password
+* Forgot password with email OTP verification (three-step: request → verify → reset)
+* JWT Bearer token auth on all protected API endpoints
+* Password hashing with Passlib (bcrypt)
+* Rate limiting on `/auth/login` (5 requests/minute per IP)
 
 ### AI Response Generation
 
 * Gemini 2.5 Flash integration
-* Prompt and response storage
-* Response tracking and monitoring
+* Prompt submission and AI response display
+* All interactions automatically stored for governance tracking
 
 ### Prompt History
 
-* Search functionality
-* Date filtering
-* Detailed prompt inspection
-* CSV export
+* Full history table with date, time, model, status, and response length columns
+* Live client-side filtering by date range and keyword (no re-fetches)
+* Detail modal per record showing full prompt and response text
+* CSV export of the currently-filtered view
 
-### Analytics
+### Analytics Dashboard
 
-* Request monitoring
-* Success and failure tracking
-* Average prompt length
-* Average response length
-* Model usage analytics
+* Core KPIs: total requests, AI requests, manual requests
+* Performance metrics: success rate, failed requests, longest response
+* Request distribution bar chart (Chart.js)
+* Model usage bar chart and table
+* System health and most-used model info boxes
+* Latest prompt display
 
 ### Response Evaluations
 
-* First-class response records tied to prompts
-* Automated response checks after each generated response is saved
+* First-class response records tied to generated prompts
+* Automated response checks (near-empty, max length, sensitive words, repeated text)
 * Human evaluation endpoint with JWT-based evaluator attribution
-* Evaluation filtering by response and evaluation type
+* Evaluation filtering by response and type
+
+---
 
 ## Tech Stack
 
+### Active Frontend
+
+* **Node.js** + **Express** — serves static files and injects runtime config
+* **Vanilla HTML / CSS / JS** — no framework, no build step
+* **Chart.js** (CDN) — dashboard charts
+* Deployed as a Docker container on Railway
+
 ### Backend
 
-* FastAPI
-* SQLAlchemy
-* PostgreSQL
-* Passlib
-* PyJWT
-* Gemini API
+* **FastAPI** (Python)
+* **SQLAlchemy** ORM
+* **Alembic** — database migrations
+* **PostgreSQL** — production database
+* **Passlib** (bcrypt) — password hashing
+* **PyJWT** — JWT token signing/verification
+* **Resend** — transactional email for OTP delivery
+* **Google Gemini API** (Gemini 2.5 Flash) — AI generation
+* **slowapi** — rate limiting
 
-### Frontend
+### Legacy Frontend (archived, not deployed)
 
-* Streamlit
+* **Streamlit** — source in `frontend/`, retained for reference
 
-### Database
-
-* PostgreSQL
+---
 
 ## Project Structure
 
 ```text
 AI-Governance-Dashboard/
-|-- backend/
+|-- backend/                        # FastAPI application
+|   |-- config/
 |   |-- database/
 |   |-- routes/
 |   |-- schemas/
 |   `-- services/
-|-- frontend/
+|-- frontend/                       # Streamlit frontend (archived, not deployed)
 |   |-- app.py
 |   `-- pages/
-|-- migrations/
+|-- governance-dashboard-frontend/  # Node.js/Express frontend (ACTIVE)
+|   |-- public/
+|   |   |-- css/style.css
+|   |   |-- js/                     # api.js, auth.js, dashboard.js, generate.js, history.js
+|   |   |-- dashboard.html
+|   |   |-- generate.html
+|   |   |-- history.html
+|   |   |-- login.html
+|   |   |-- signup.html
+|   |   `-- forgot-password.html
+|   |-- server.js
+|   |-- package.json
+|   |-- Dockerfile                  # Used for Railway deployment
+|   `-- .env.example
+|-- migrations/                     # Alembic migration scripts
 |-- assets/
 |-- docs/
 |-- .github/workflows/
-|-- Dockerfile
-|-- Dockerfile.frontend
-|-- docker-compose.yml
+|-- Dockerfile                      # Backend Docker image
+|-- Dockerfile.frontend             # Legacy Streamlit Docker image (archived)
+|-- docker-compose.yml              # Local full-stack dev (backend + Streamlit)
 |-- entrypoint.sh
 |-- alembic.ini
 |-- requirements-backend.txt
-|-- requirements-frontend.txt
+|-- requirements-frontend.txt       # Legacy Streamlit deps
 |-- requirements.txt
 `-- README.md
 ```
 
-## Getting Started
+---
 
-### 1. Clone the repository
+## Getting Started (Local Development)
+
+### Prerequisites
+
+* Python 3.12+, a virtual environment tool
+* Node.js 18+ and npm
+* PostgreSQL (or use the Docker Compose setup which starts one automatically)
+
+---
+
+### Running the Backend
+
+#### 1. Clone the repository
 
 ```bash
 git clone https://github.com/teja2704/AI-Governance-Dashboard.git
 cd AI-Governance-Dashboard
 ```
 
-### 2. Create environment configuration
+#### 2. Create environment configuration
 
 ```bash
 cp .env.example .env
@@ -112,87 +158,86 @@ cp .env.example .env
 
 Edit `.env` and set real values for:
 
-* `DATABASE_URL`
+* `DATABASE_URL` — PostgreSQL connection string, or `sqlite:///./local.db` for local SQLite
 * `GEMINI_API_KEY`
 * `JWT_SECRET_KEY`
 * `AUTH_BOOTSTRAP_USERNAME`
 * `AUTH_BOOTSTRAP_PASSWORD`
+* `RESEND_API_KEY` — required for password-reset email delivery
 
-### 3. Create and activate a virtual environment
+#### 3. Create and activate a virtual environment
 
 ```bash
 python -m venv venv
-venv\Scripts\activate
+venv\Scripts\activate      # Windows
+# source venv/bin/activate  # macOS/Linux
 ```
 
-### 4. Install dependencies
-
-For local development with both backend and frontend:
-
-```bash
-pip install -r requirements.txt
-```
-
-Backend-only and frontend-only dependency sets are also available:
+#### 4. Install backend dependencies
 
 ```bash
 pip install -r requirements-backend.txt
-pip install -r requirements-frontend.txt
 ```
 
-### 5. Run database migrations
-
-Initialize the database schema with Alembic:
+#### 5. Run database migrations
 
 ```bash
 alembic upgrade head
 ```
 
-If you are pointing at an older database that was already initialized before Alembic was added, inspect the schema first. If it already matches the initial migration, stamp it instead of recreating tables:
+If pointing at an existing database that pre-dates Alembic, stamp instead of migrating:
 
 ```bash
 alembic stamp head
 ```
 
-### 6. Start the FastAPI backend
+#### 6. Start the FastAPI backend
 
 ```bash
 uvicorn backend.main:app --reload
 ```
 
-The API will be available at `http://127.0.0.1:8000`.
+The API is available at `http://127.0.0.1:8000`. Swagger docs at `http://127.0.0.1:8000/docs`.
 
-On startup, the backend creates the bootstrap user from `AUTH_BOOTSTRAP_USERNAME` and `AUTH_BOOTSTRAP_PASSWORD` if that user does not already exist. The database schema must already be migrated before startup.
+On startup the backend creates the bootstrap user from `AUTH_BOOTSTRAP_USERNAME` / `AUTH_BOOTSTRAP_PASSWORD` if it doesn't already exist.
 
-### 7. Start the Streamlit frontend
+---
+
+### Running the Node.js Frontend
 
 ```bash
-streamlit run frontend/app.py
+cd governance-dashboard-frontend
+cp .env.example .env       # sets FASTAPI_BASE_URL=http://127.0.0.1:8000
+npm install
+npm start                  # production server on port 3000
+# -- or --
+npm run dev                # nodemon with auto-restart on file changes
 ```
 
-Sign in with the bootstrap credentials configured in `.env`.
+Open `http://localhost:3000`. Sign in with the bootstrap credentials set in the root `.env`.
 
-## Running with Docker Compose
+> The `.env` inside `governance-dashboard-frontend/` only needs `FASTAPI_BASE_URL` and `PORT`. It is separate from the root `.env` used by the backend.
 
-The recommended way to run the full stack (PostgreSQL, backend, frontend) locally or on a single-host deployment:
+---
+
+### Running with Docker Compose (Backend + PostgreSQL only)
+
+The `docker-compose.yml` starts the FastAPI backend and a PostgreSQL database. The Node.js frontend is run separately (see above), or deployed to Railway independently.
 
 ```bash
 cp .env.example .env
-# Edit .env with real values (see required variables below)
+# Edit .env with real values
 docker compose up --build
 ```
-
-This starts three services:
 
 | Service | Port | Notes |
 |---|---|---|
 | `db` | 5432 | PostgreSQL 16, health-checked before backend starts |
-| `backend` | 8000 | Runs `alembic upgrade head` automatically on startup, then uvicorn |
-| `frontend` | 8501 | Streamlit, connects to backend via internal Docker network |
+| `backend` | 8000 | Runs `alembic upgrade head` on startup, then uvicorn |
 
-Database migrations are applied automatically via `entrypoint.sh` — no manual `alembic upgrade head` step is required when using Docker Compose.
+Database migrations are applied automatically via `entrypoint.sh`.
 
-### Required `.env` variables
+#### Required `.env` variables for Docker Compose
 
 ```
 DATABASE_URL
@@ -202,48 +247,107 @@ JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES
 AUTH_BOOTSTRAP_USERNAME
 AUTH_BOOTSTRAP_PASSWORD
+RESEND_API_KEY
 POSTGRES_USER
 POSTGRES_PASSWORD
 POSTGRES_DB
 ```
 
-See `.env.example` for the full template with descriptions. Never commit `.env` — it is gitignored.
-
-### Health check
-
-Once all containers are up, verify the backend is healthy:
+#### Health check
 
 ```bash
 curl http://localhost:8000/health
 # {"status": "healthy"}
 ```
 
+---
+
+### Legacy: Running the Streamlit Frontend (optional, archived)
+
+The Streamlit source is retained in `frontend/` but is not the active UI. To run it locally for reference:
+
+```bash
+pip install -r requirements-frontend.txt
+streamlit run frontend/app.py
+```
+
+Sign in with the bootstrap credentials. Note that some auth flows (OTP reset, etc.) are only partially implemented in this version.
+
+---
+
+## Deploying the Node Frontend to Railway
+
+The Node.js frontend (`governance-dashboard-frontend/`) is designed to be deployed as a separate Railway service alongside the existing backend service, within the same Railway project.
+
+**Important — subfolder deployment**: This repository contains both the backend and frontend in subdirectories. Railway must be pointed at the correct subfolder. Follow these steps exactly:
+
+### Step-by-step Railway deployment
+
+**1. Open your Railway project**
+Go to [railway.app](https://railway.app) and open the project that already contains your backend and PostgreSQL services.
+
+**2. Add a new service**
+Click **+ New** → **GitHub Repo** → select `teja2704/AI-Governance-Dashboard`.
+
+**3. Set the Root Directory**
+In the new service's **Settings** → **Build** section, set **Root Directory** to:
+```
+governance-dashboard-frontend
+```
+This tells Railway to treat that subfolder as the project root. Without this setting Railway would try to build from the repo root and pick up the backend `Dockerfile` instead.
+
+**4. Confirm the Dockerfile path**
+Railway should auto-detect `Dockerfile` inside `governance-dashboard-frontend/`. The **Dockerfile Path** field can stay as its default (`Dockerfile`) since it's resolved relative to the Root Directory set above.
+
+**5. Set environment variables**
+In the service's **Variables** tab, add:
+
+| Variable | Value |
+|---|---|
+| `FASTAPI_BASE_URL` | `https://ai-governance-dashboard-production-4c62.up.railway.app` |
+
+Railway injects `PORT` automatically — do **not** set it manually.
+
+**6. Deploy**
+Click **Deploy**. Railway will build the Docker image from `governance-dashboard-frontend/Dockerfile` and start the container.
+
+**7. Generate a public domain**
+In the service's **Settings** → **Networking** section, click **Generate Domain**. Railway will assign a `*.up.railway.app` URL.
+
+**8. Update this README**
+Replace the placeholder in the Live Deployment table above with the real Railway URL.
+
+**9. Verify and retire the Streamlit service**
+Once the Node.js frontend is live and working at the new URL, go to the Railway dashboard and **delete the `ravishing-integrity` Streamlit service** (this is a manual dashboard action — do not do it until the new frontend is confirmed working).
+
+---
+
 ## Security Notes
 
-JWT authentication is required on all protected API routers as of this version. The `/auth/login`, `/health`, and `/` endpoints remain public for login and service checks.
+JWT authentication is required on all protected API routers. The `/auth/login`, `/auth/signup`, `/auth/forgot-password`, `/health`, and `/` endpoints are public.
 
-Passwords are stored as Passlib hashes in the `users` table. JWT signing uses `JWT_SECRET_KEY` from the environment; use a long random value and rotate it if it is exposed.
+Passwords are stored as Passlib bcrypt hashes. JWT tokens are signed with `JWT_SECRET_KEY` — use a long random value and rotate if exposed.
 
-The Streamlit frontend stores the JWT only in server-side session memory and sends it as a Bearer token on API requests. It does not write the token to `localStorage`.
+The Node.js frontend stores the JWT in browser `localStorage` and sends it as a Bearer token on every API request. A 401 response from any protected endpoint automatically clears the token and redirects to the login page.
 
-**Rate limiting** is active on the `/auth/login` endpoint: a maximum of **5 requests per minute** is allowed per remote IP address. Requests that exceed this limit receive a `429 Too Many Requests` JSON response. This limit is enforced by [slowapi](https://github.com/laurents/slowapi) using an in-process memory store (no external cache required). The limiter uses the direct connecting IP (`get_remote_address`); if deployed behind a reverse proxy or load balancer, this will need updating to parse `X-Forwarded-For` correctly.
+**Rate limiting** is active on `/auth/login`: 5 requests per minute per IP via slowapi. If deployed behind a reverse proxy, `X-Forwarded-For` parsing will need to be added for correct IP attribution.
 
-See [docs/security-review.md](docs/security-review.md) for the current security check notes and remaining threat considerations.
+See [docs/security-review.md](docs/security-review.md) for current security notes.
+
+---
 
 ## API Notes
 
-Authenticated API routers include:
+Authenticated API routers (JWT Bearer required):
 
-* `/prompts`
-* `/responses`
-* `/evaluations`
-* `/analytics`
+* `/prompts` — prompt creation, generation, history
+* `/responses` — response records
+* `/evaluations` — automated and human evaluations
+* `/analytics` — KPIs, model usage, dashboard metrics
 
-Generated Gemini responses are saved automatically as response records tied to the prompt that produced them. Automated evaluations run immediately after each generated response is saved.
+Interactive API documentation is available at `/docs` (Swagger UI) and `/redoc`.
 
-## Implementation Documentation
-
-Phase notes and the follow-up issue queue are maintained in [docs/implementation-phases.md](docs/implementation-phases.md).
+---
 
 ## CI / Continuous Integration
 
@@ -252,11 +356,20 @@ GitHub Actions runs on every push and pull request to `main`:
 * **Tests** — `pytest` against all route and rate-limit tests
 * **Dependency audit** — `pip-audit` scans for known CVEs in backend dependencies
 
-See [`.github/workflows/ci.yml`](.github/workflows/ci.yml) for the full pipeline definition.
+See [`.github/workflows/ci.yml`](.github/workflows/ci.yml) for the pipeline definition.
+
+---
+
+## Implementation Documentation
+
+Phase notes and the follow-up issue queue are in [docs/implementation-phases.md](docs/implementation-phases.md).
+
+---
 
 ## Future Enhancements
 
-* PDF report generation
-* Multi-model support
+* Google OAuth sign-in (placeholder exists in UI; backend endpoint stubbed)
+* PDF governance report generation
+* Multi-model support (currently hardcoded to Gemini 2.5 Flash)
 * Rate limiter backed by Redis (for multi-instance / load-balanced deployments)
 * `X-Forwarded-For` parsing for correct IP attribution behind a reverse proxy

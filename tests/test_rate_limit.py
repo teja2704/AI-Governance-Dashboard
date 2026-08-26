@@ -1,4 +1,4 @@
-﻿import os
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,13 +23,15 @@ from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
 
+
+
 from backend.main import app
 from backend.rate_limiter import limiter
 
 
 LOGIN_URL = "/auth/login"
 LOGIN_BODY = {
-    "username": os.environ["AUTH_BOOTSTRAP_USERNAME"],
+    "email": os.environ["AUTH_BOOTSTRAP_USERNAME"],
     "password": os.environ["AUTH_BOOTSTRAP_PASSWORD"],
 }
 

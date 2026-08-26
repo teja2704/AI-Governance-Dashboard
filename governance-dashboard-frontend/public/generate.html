@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generate — AI Governance</title>
+  <meta name="description" content="Generate AI responses using Gemini and automatically track interactions for governance." />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="/config.js"></script>
+</head>
+<body>
+
+  <!-- ── Shared top nav ─────────────────────────────────────────────────────── -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:24px;">
+      <span class="topbar-brand">AI Governance</span>
+      <nav>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/generate.html" class="active">Generate</a>
+        <a href="/history.html">History</a>
+      </nav>
+    </div>
+    <div class="topbar-right">
+      <button id="logout-btn">Sign out</button>
+    </div>
+  </div>
+
+  <!-- ── Page content ───────────────────────────────────────────────────────── -->
+  <div class="page-content">
+
+    <div class="page-header">
+      <h1>Generate AI Response</h1>
+      <p>Generate responses using Gemini. Every interaction is automatically stored for governance tracking.</p>
+    </div>
+
+    <!-- Error banner (hidden by default) -->
+    <div id="generate-error" class="error-banner hidden"></div>
+
+    <!-- Success banner (hidden by default) -->
+    <div id="generate-success" class="success-banner hidden"></div>
+
+    <!-- ── Prompt form ─────────────────────────────────────────────────────── -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;">
+      <form id="generate-form" class="generate-form">
+        <label class="form-label" for="prompt-input">Prompt</label>
+        <textarea
+          id="prompt-input"
+          name="prompt"
+          placeholder="Example: Explain XGBoost in simple terms…"
+          rows="6"
+        ></textarea>
+        <p class="form-hint">Model: Gemini 2.5 Flash · Responses are stored automatically.</p>
+        <div style="margin-top:14px;">
+          <button
+            type="submit"
+            id="generate-btn"
+            class="btn btn-primary"
+            style="padding:10px 24px;font-size:0.95rem;"
+          >
+            Generate
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── Response section (hidden until a successful response arrives) ─── -->
+    <div id="response-section" class="hidden">
+      <p class="section-title">AI Response</p>
+      <div class="response-box" id="response-box"></div>
+    </div>
+
+    <p style="color:var(--text-muted);font-size:0.8rem;margin-top:24px;">
+      All generated responses are automatically stored in the database and tracked through the governance dashboard.
+    </p>
+
+  </div><!-- /.page-content -->
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/generate.js"></script>
+</body>
+</html>

@@ -29,15 +29,6 @@ def verify_password(
     )
 
 
-def get_user_by_username(
-    db: Session,
-    username: str
-) -> User | None:
-    return (
-        db.query(User)
-        .filter(User.username == username)
-        .first()
-    )
 
 
 def get_user_by_email(
@@ -53,12 +44,14 @@ def get_user_by_email(
 
 def create_user(
     db: Session,
-    username: str,
+    first_name: str,
+    last_name: str,
     email: str,
     password: str
 ) -> User:
     user = User(
-        username=username,
+        first_name=first_name,
+        last_name=last_name,
         email=email,
         hashed_password=hash_password(password)
     )
@@ -72,10 +65,10 @@ def create_user(
 
 def authenticate_user(
     db: Session,
-    username: str,
+    email: str,
     password: str
 ) -> User | None:
-    user = get_user_by_username(db, username)
+    user = get_user_by_email(db, email)
 
     if not user or not user.is_active:
         return None
@@ -121,13 +114,13 @@ def _access_token_minutes() -> int:
     )
 
 
-def create_access_token(username: str) -> str:
+def create_access_token(email: str) -> str:
     expires_at = datetime.now(UTC) + timedelta(
         minutes=_access_token_minutes()
     )
 
     payload = {
-        "sub": username,
+        "sub": email,
         "exp": expires_at
     }
 
@@ -160,15 +153,15 @@ def decode_access_token(token: str) -> str | None:
 
 
 def ensure_bootstrap_user(db: Session) -> User | None:
-    username = os.getenv("AUTH_BOOTSTRAP_USERNAME")
+    email = os.getenv("AUTH_BOOTSTRAP_USERNAME")
     password = os.getenv("AUTH_BOOTSTRAP_PASSWORD")
 
-    if not username or not password:
+    if not email or not password:
         return None
 
-    existing_user = get_user_by_username(
+    existing_user = get_user_by_email(
         db,
-        username
+        email
     )
 
     if existing_user:
@@ -176,8 +169,9 @@ def ensure_bootstrap_user(db: Session) -> User | None:
 
     return create_user(
         db,
-        username,
-        username,  # email = username for bootstrap
+        "Admin",
+        "User",
+        email,
         password
     )
 
@@ -185,6 +179,9 @@ def ensure_bootstrap_user(db: Session) -> User | None:
 import secrets
 import string
 import requests
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def generate_otp() -> str:
@@ -196,7 +193,7 @@ def send_otp_email(email: str, otp: str) -> None:
     """Send OTP via Resend API using standard requests."""
     api_key = os.getenv("RESEND_API_KEY")
     if not api_key:
-        print(f"Warning: RESEND_API_KEY not set. OTP for {email} is {otp}")
+        logger.error(f"RESEND_API_KEY not set. Cannot send email to {email}")
         return
 
     url = "https://api.resend.com/emails"
@@ -205,16 +202,23 @@ def send_otp_email(email: str, otp: str) -> None:
         "Content-Type": "application/json"
     }
     payload = {
-        "from": "noreply@resend.dev",
+        "from": "onboarding@resend.dev",
         "to": [email],
         "subject": "Password Reset Code",
         "html": f"<p>Your reset code is <strong>{otp}</strong>, expires in 10 minutes.</p>"
     }
     
     try:
-        requests.post(url, headers=headers, json=payload, timeout=10)
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response.raise_for_status()
+        res_data = response.json()
+        email_id = res_data.get("id", "unknown")
+        logger.info(f"Successfully sent reset email to {email} (Resend ID: {email_id})")
     except requests.RequestException as e:
-        print(f"Failed to send email to {email}: {e}")
+        error_details = str(e)
+        if hasattr(e, 'response') and e.response is not None:
+            error_details += f" | Body: {e.response.text}"
+        logger.error(f"Failed to send reset email to {email}. Error: {error_details}")
 
 
 def create_reset_token(user_id: int) -> str:
@@ -248,3 +252,53 @@ def decode_reset_token(token: str) -> int | None:
         return int(subject)
     except ValueError:
         return None
+
+
+def verify_google_token(id_token: str) -> dict | None:
+    """Verifies a Google ID token and returns the payload if valid."""
+    url = f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}"
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return response.json()
+    except requests.RequestException:
+        pass
+    return None
+
+
+def get_or_create_google_user(db: Session, google_info: dict) -> User | None:
+    """Finds a user by email, links their google_id, or creates a new one."""
+    email = google_info.get("email")
+    google_id = google_info.get("sub")
+    
+    if not email or not google_id:
+        return None
+
+    first_name = google_info.get("given_name", "Unknown")
+    last_name = google_info.get("family_name", "Unknown")
+    avatar_url = google_info.get("picture")
+
+    user = get_user_by_email(db, email)
+    if user:
+        if not user.google_id:
+            user.google_id = google_id
+            if avatar_url:
+                user.avatar_url = avatar_url
+            db.commit()
+            db.refresh(user)
+        return user
+    
+    # Create new user via Google
+    new_user = User(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        google_id=google_id,
+        avatar_url=avatar_url,
+        hashed_password=hash_password(secrets.token_urlsafe(32))
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+

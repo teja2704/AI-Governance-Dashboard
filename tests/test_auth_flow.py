@@ -42,7 +42,8 @@ class AuthFlowTest(unittest.TestCase):
             response = client.post(
                 "/auth/signup",
                 json={
-                    "username": "newuser",
+                    "first_name": "New",
+                    "last_name": "User",
                     "email": "newuser@example.com",
                     "password": "StrongPassword123!"
                 }
@@ -50,33 +51,14 @@ class AuthFlowTest(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn("access_token", response.json())
 
-    def test_signup_duplicate_username(self):
-        with TestClient(app) as client:
-            client.post(
-                "/auth/signup",
-                json={
-                    "username": "dupuser",
-                    "email": "dupuser1@example.com",
-                    "password": "StrongPassword123!"
-                }
-            )
-            response = client.post(
-                "/auth/signup",
-                json={
-                    "username": "dupuser",
-                    "email": "dupuser2@example.com",
-                    "password": "StrongPassword123!"
-                }
-            )
-            self.assertEqual(response.status_code, 409)
-            self.assertEqual(response.json()["detail"], "Username already taken.")
 
     def test_signup_duplicate_email(self):
         with TestClient(app) as client:
             client.post(
                 "/auth/signup",
                 json={
-                    "username": "dupemail1",
+                    "first_name": "Dup",
+                    "last_name": "Email1",
                     "email": "dupemail@example.com",
                     "password": "StrongPassword123!"
                 }
@@ -84,7 +66,8 @@ class AuthFlowTest(unittest.TestCase):
             response = client.post(
                 "/auth/signup",
                 json={
-                    "username": "dupemail2",
+                    "first_name": "Dup",
+                    "last_name": "Email2",
                     "email": "dupemail@example.com",
                     "password": "StrongPassword123!"
                 }
@@ -107,7 +90,8 @@ class AuthFlowTest(unittest.TestCase):
             client.post(
                 "/auth/signup",
                 json={
-                    "username": "resetuser",
+                    "first_name": "Reset",
+                    "last_name": "User",
                     "email": "resetuser@example.com",
                     "password": "OldPassword123!"
                 }
@@ -145,7 +129,7 @@ class AuthFlowTest(unittest.TestCase):
             
             # Verify password was updated
             db = SessionLocal()
-            user = db.query(User).filter(User.username == "resetuser").first()
+            user = db.query(User).filter(User.email == "resetuser@example.com").first()
             self.assertTrue(verify_password("NewPassword123!", user.hashed_password))
             db.close()
             

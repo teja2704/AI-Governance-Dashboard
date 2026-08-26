@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>History — AI Governance</title>
+  <meta name="description" content="Search, filter, inspect, and export historical AI prompt interactions." />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="/config.js"></script>
+</head>
+<body>
+
+  <!-- ── Shared top nav ─────────────────────────────────────────────────────── -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:24px;">
+      <span class="topbar-brand">AI Governance</span>
+      <nav>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/generate.html">Generate</a>
+        <a href="/history.html" class="active">History</a>
+      </nav>
+    </div>
+    <div class="topbar-right">
+      <button id="logout-btn">Sign out</button>
+    </div>
+  </div>
+
+  <!-- ── Page content ───────────────────────────────────────────────────────── -->
+  <div class="page-content">
+
+    <div class="page-header">
+      <h1>Prompt History</h1>
+      <p>Search, filter, inspect, and export historical AI interactions.</p>
+    </div>
+
+    <!-- Loading state -->
+    <div id="history-loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      Loading history…
+    </div>
+
+    <!-- Error state -->
+    <div id="history-error" class="error-banner hidden"></div>
+
+    <!-- Main content (hidden until data loads) -->
+    <div id="history-content" class="hidden">
+
+      <!-- ── Filter bar ──────────────────────────────────────────────────── -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="filter-start">Start Date</label>
+          <input type="date" id="filter-start" />
+        </div>
+        <div class="filter-group">
+          <label for="filter-end">End Date</label>
+          <input type="date" id="filter-end" />
+        </div>
+        <div class="filter-group filter-group--grow">
+          <label for="filter-search">Search Prompts</label>
+          <input
+            type="search"
+            id="filter-search"
+            placeholder="Filter by keyword…"
+          />
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <button id="download-csv" class="btn btn-secondary">
+            ↓ Download CSV
+          </button>
+        </div>
+      </div>
+
+      <p class="filter-count" id="filter-count"></p>
+
+      <!-- ── History table ───────────────────────────────────────────────── -->
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Prompt</th>
+              <th>Model</th>
+              <th>Status</th>
+              <th>Response Length</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <!-- Rows injected by history.js -->
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /#history-content -->
+  </div><!-- /.page-content -->
+
+  <!-- ── Detail modal ───────────────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="detail-modal" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-heading">Prompt Detail — #<span id="modal-id"></span></h2>
+        <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      </div>
+
+      <!-- Metadata row -->
+      <div class="modal-meta">
+        <div class="modal-meta-item">
+          <span class="meta-key">Model</span>
+          <span class="meta-val" id="modal-model">—</span>
+        </div>
+        <div class="modal-meta-item">
+          <span class="meta-key">Status</span>
+          <span class="meta-val" id="modal-status">—</span>
+        </div>
+        <div class="modal-meta-item">
+          <span class="meta-key">Timestamp</span>
+          <span class="meta-val" id="modal-timestamp">—</span>
+        </div>
+      </div>
+
+      <!-- Full prompt -->
+      <div class="modal-section">
+        <div class="modal-section-label">Prompt</div>
+        <div class="read-only-box" id="modal-prompt"></div>
+      </div>
+
+      <!-- Full response -->
+      <div class="modal-section">
+        <div class="modal-section-label">Response</div>
+        <div class="read-only-box" id="modal-response"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/history.js"></script>
+</body>
+</html>

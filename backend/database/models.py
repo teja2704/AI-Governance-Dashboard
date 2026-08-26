@@ -20,11 +20,26 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    username = Column(
-        String(150),
+    first_name = Column(
+        String(100),
+        nullable=False
+    )
+
+    last_name = Column(
+        String(100),
+        nullable=False
+    )
+
+    google_id = Column(
+        String(255),
         unique=True,
         index=True,
-        nullable=False
+        nullable=True
+    )
+
+    avatar_url = Column(
+        String(255),
+        nullable=True
     )
 
     email = Column(

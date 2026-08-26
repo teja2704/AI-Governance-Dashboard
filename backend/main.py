@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -15,6 +16,15 @@ from backend.routes.response_routes import router as response_router
 
 from backend.routes.analytics_routes import (
     router as analytics_router
+)
+
+# Configure root logger so all module-level loggers (e.g. auth_service)
+# emit to stdout with timestamps.  Set level to INFO so successful sends
+# are visible; errors will also appear regardless of this threshold.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-8s  %(name)s: %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
 )
 
 

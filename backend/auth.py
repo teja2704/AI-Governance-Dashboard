@@ -6,7 +6,7 @@ from backend.database.db import get_db
 from backend.database.models import User
 from backend.services.auth_service import (
     decode_access_token,
-    get_user_by_username
+    get_user_by_email
 )
 
 
@@ -32,16 +32,16 @@ def get_current_user(
     if credentials is None:
         raise _unauthorized()
 
-    username = decode_access_token(
+    email = decode_access_token(
         credentials.credentials
     )
 
-    if username is None:
+    if email is None:
         raise _unauthorized()
 
-    user = get_user_by_username(
+    user = get_user_by_email(
         db,
-        username
+        email
     )
 
     if user is None or not user.is_active:

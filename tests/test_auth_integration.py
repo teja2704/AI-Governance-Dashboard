@@ -48,7 +48,7 @@ class AuthIntegrationTest(unittest.TestCase):
         response = client.post(
             "/auth/login",
             json={
-                "username": os.environ["AUTH_BOOTSTRAP_USERNAME"],
+                "email": os.environ["AUTH_BOOTSTRAP_USERNAME"],
                 "password": os.environ["AUTH_BOOTSTRAP_PASSWORD"]
             }
         )
@@ -88,7 +88,7 @@ class AuthIntegrationTest(unittest.TestCase):
             user = (
                 db.query(User)
                 .filter(
-                    User.username ==
+                    User.email ==
                     os.environ["AUTH_BOOTSTRAP_USERNAME"]
                 )
                 .first()

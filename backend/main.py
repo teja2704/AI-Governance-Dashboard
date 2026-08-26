@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -27,6 +28,17 @@ logging.basicConfig(
     datefmt="%Y-%m-%dT%H:%M:%S",
 )
 
+# CORS allowed origins — configurable via env var so production and local
+# dev don't require a code change.
+# Set CORS_ALLOWED_ORIGINS in Railway to a comma-separated list, e.g.:
+#   https://humble-reflection-production-22fc.up.railway.app,http://localhost:3000
+_cors_env = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:8501"
+)
+CORS_ORIGINS: list[str] = [o.strip() for o in _cors_env.split(",") if o.strip()]
+print("CORS_ORIGINS:", CORS_ORIGINS)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,7 +54,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8501"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
